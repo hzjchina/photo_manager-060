@@ -1,5 +1,6 @@
 package top.kikt.imagescanner.core
 
+import android.R
 import android.app.Activity
 import android.app.RecoverableSecurityException
 import android.content.ContentResolver
@@ -13,17 +14,21 @@ import androidx.annotation.RequiresApi
 import io.flutter.plugin.common.PluginRegistry
 import top.kikt.imagescanner.core.utils.IDBUtils
 import top.kikt.imagescanner.util.ResultHandler
+import top.kikt.imagescanner.util.PathUtil
+import java.util.Arrays
 
 class PhotoManagerDeleteManager(val context: Context, var activity: Activity?) : PluginRegistry.ActivityResultListener {
 
   fun bindActivity(activity: Activity?) {
     this.activity = activity
+    pathUtil = PathUtil(this.activity)
   }
 
   private var requestCodeIndex = 3000
   private var androidRDeleteRequestCode = 40069
 
   private val uriMap = HashMap<Int, Uri>()
+  private var pathUtil: PathUtil? = null
 
   private val cr: ContentResolver
     get() = context.contentResolver
@@ -41,7 +46,21 @@ class PhotoManagerDeleteManager(val context: Context, var activity: Activity?) :
 
   private val androidQResult = arrayListOf<String>()
 
+  fun setAndroidQHandler(handler: ResultHandler) {
+    androidQHandler = handler
+  }
   override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
+    if(requestCode == 2356){
+      var imageUris = pathUtil?.handleChooseMultiImageResult(resultCode, data)
+      var path = if (imageUris?.size!! > 0) imageUris?.get(0) else ""
+      androidQHandler?.reply(path)
+      return true
+    }
+    if(requestCode == 2357){
+      var imageUris = pathUtil?.handleChooseMultiImageResult(resultCode, data)
+      androidQHandler?.reply(imageUris)
+      return true
+    }
     if (requestCode == androidRDeleteRequestCode) {
       handleAndroidRDelete(resultCode, data)
       return true

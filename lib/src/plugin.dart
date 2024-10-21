@@ -367,6 +367,16 @@ class Plugin with BasePlugin, IosPlugin, AndroidPlugin {
       'option': option.toMap(),
     });
   }
+
+  Future<String> pickerSingleImage() async{
+    return await _channel.invokeMethod("pickerSingleImage");
+  }
+
+  Future<List<String>> pickerImages() async{
+   var l =  await _channel.invokeMethod("pickerImages");
+    // return List<String>.from(l);
+    return l.whereType<String>().toList();
+  }
 }
 
 mixin BasePlugin {

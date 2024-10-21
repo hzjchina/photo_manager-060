@@ -315,4 +315,13 @@ class PhotoManager {
 
     return src;
   }
+
+  static Future<String> pickerSingleImage() async{
+    if(Platform.isAndroid)return _plugin.pickerSingleImage();
+    return "notSupport";
+  }
+  static Future<List<String>> pickerImages() async{
+    if(Platform.isAndroid)return _plugin.pickerImages();
+    return List<String>();
+  }
 }

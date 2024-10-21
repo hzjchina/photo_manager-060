@@ -3,12 +3,16 @@ package top.kikt.imagescanner.core
 import android.Manifest
 import android.app.Activity
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.os.Handler
+import android.provider.MediaStore
 import com.bumptech.glide.Glide
 import io.flutter.plugin.common.BinaryMessenger
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
+import io.flutter.plugin.common.PluginRegistry
 import top.kikt.imagescanner.core.entity.AssetEntity
 import top.kikt.imagescanner.core.entity.FilterOption
 import top.kikt.imagescanner.core.entity.ThumbLoadOption
@@ -24,9 +28,6 @@ import java.util.concurrent.ArrayBlockingQueue
 import java.util.concurrent.ThreadPoolExecutor
 import java.util.concurrent.TimeUnit
 
-/// create 2019-09-05 by cai
-
-
 class PhotoManagerPlugin(
     private val applicationContext: Context,
     private val messenger: BinaryMessenger,
@@ -34,7 +35,7 @@ class PhotoManagerPlugin(
     private val permissionsUtils: PermissionsUtils
 ) : MethodChannel.MethodCallHandler {
 
-  val deleteManager = PhotoManagerDeleteManager(applicationContext, activity)
+  val deleteManager = PhotoManagerDeleteManager(applicationContext, activity);
 
   fun bindActivity(activity: Activity?) {
     this.activity = activity
@@ -59,7 +60,7 @@ class PhotoManagerPlugin(
 
   }
 
-  private val notifyChannel = PhotoManagerNotifyChannel(applicationContext, messenger, Handler())
+  private val notifyChannel = PhotoManagerNotifyChannel(applicationContext, messenger, Handler());
 
   init {
     permissionsUtils.permissionsListener = object : PermissionsListener {
@@ -71,7 +72,7 @@ class PhotoManagerPlugin(
     }
   }
 
-  private val photoManager = PhotoManager(applicationContext)
+  private val photoManager = PhotoManager(applicationContext);
 
   private var ignorePermissionCheck = false;
 
@@ -85,7 +86,7 @@ class PhotoManagerPlugin(
       return
     }
 
-    var needLocationPermissions = false
+    var needLocationPermissions = false;
 
     val handleResult = when (call.method) {
       "releaseMemCache" -> {
@@ -261,6 +262,32 @@ class PhotoManagerPlugin(
 
           val list = photoManager.getGalleryList(type, hasAll, onlyAll, option)
           resultHandler.reply(ConvertUtils.convertToGalleryResult(list))
+        }
+      }
+      "pickerSingleImage" ->{
+        runOnBackground {
+          var pickSingleMediaIntent = Intent(Intent.ACTION_OPEN_DOCUMENT)
+          .setType("image/*")
+          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            pickSingleMediaIntent = Intent(MediaStore.ACTION_PICK_IMAGES)
+              .setType("image/*")
+          }
+        deleteManager.setAndroidQHandler(resultHandler)
+        activity?.startActivityForResult(pickSingleMediaIntent, 2356)
+        }
+      }
+      "pickerImages" ->{
+        runOnBackground {
+          var pickMediaIntent = Intent(Intent.ACTION_OPEN_DOCUMENT)
+          .putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
+          .setType("image/*")
+          if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            pickMediaIntent = Intent(MediaStore.ACTION_PICK_IMAGES)
+              .putExtra(MediaStore.EXTRA_PICK_IMAGES_MAX, 9)
+              .setType("image/*")
+          }
+          deleteManager.setAndroidQHandler(resultHandler)
+          activity?.startActivityForResult(pickMediaIntent, 2357)
         }
       }
       "getAssetWithGalleryId" -> {
