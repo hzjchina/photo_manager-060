@@ -84,6 +84,10 @@ class PhotoManager(private val context: Context) {
     try {
       if (useFilePath()) {
         val asset = dbUtils.getAssetEntity(context, id)
+        if(asset == null && id.contains("/")){
+          ThumbnailUtil.getThumbnailByGlide(context, id, option.width, option.height, format, quality, resultHandler.result)
+          return
+        }
         if (asset == null) {
           resultHandler.replyError("The asset not found!")
           return
